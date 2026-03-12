@@ -1,6 +1,13 @@
 import { Link } from "expo-router";
 import { useEffect, useState } from "react";
-import { Image, ScrollView, StyleSheet, Text, View } from "react-native";
+import {
+  Image,
+  ScrollView,
+  StyleSheet,
+  Text,
+  TextInput,
+  View,
+} from "react-native";
 
 interface Pokemon {
   name: string;
@@ -16,15 +23,16 @@ interface PokemonTypes {
   };
 }
 
-const colorsByType = {
-  grass: "#38b000", // fresh vibrant green
-  fire: "#ff4d00", // bright fiery orange-red
-  water: "#0096ff", // rich ocean blue
-  bug: "#70e000", // lively lime green
+const colorsByType: any = {
+  grass: "#38b000",
+  fire: "#ff4d00",
+  water: "#0096ff",
+  bug: "#70e000",
 };
 
 export default function Index() {
   const [pokemons, setPokemons] = useState<Pokemon[]>([]);
+  const [search, setSearch] = useState("");
 
   useEffect(() => {
     fetchPokemons();
@@ -33,12 +41,10 @@ export default function Index() {
   async function fetchPokemons() {
     try {
       const respond = await fetch(
-        "https://pokeapi.co/api/v2/pokemon/?limit=10",
+        "https://pokeapi.co/api/v2/pokemon/?limit=50",
       );
 
       const data = await respond.json();
-
-      //Fetch each pokemon
 
       const detailedPokemons = await Promise.all(
         data.results.map(async (pokemon: any) => {
@@ -52,11 +58,17 @@ export default function Index() {
           };
         }),
       );
+
       setPokemons(detailedPokemons);
     } catch (e) {
       console.log(e);
     }
   }
+
+  // Search filtering
+  const filteredPokemons = pokemons.filter((pokemon) =>
+    pokemon.name.toLowerCase().includes(search.toLowerCase()),
+  );
 
   return (
     <ScrollView
@@ -65,31 +77,43 @@ export default function Index() {
         padding: 16,
       }}
     >
-      {pokemons.map((pokemon) => (
+      {/* Search Bar */}
+      <TextInput
+        placeholder="Search Pokémon..."
+        value={search}
+        onChangeText={setSearch}
+        style={styles.search}
+      />
+
+      {filteredPokemons.map((pokemon) => (
         <Link
           key={pokemon.name}
           href={{ pathname: "/details", params: { name: pokemon.name } }}
           style={{
-            backgroundColor: colorsByType[pokemon.types[0].type.name] + 70,
+            backgroundColor: colorsByType[pokemon.types[0].type.name] || "#ccc",
             padding: 20,
             borderRadius: 20,
           }}
         >
           <View>
             <Text style={styles.name}>{pokemon.name}</Text>
+
             <Text style={styles.type}>{pokemon.types[0].type.name}</Text>
+
             <View
               style={{
                 flexDirection: "row",
+                justifyContent: "center",
               }}
             >
               <Image
                 source={{ uri: pokemon.image }}
                 style={{ width: 100, height: 100 }}
               />
+
               <Image
                 source={{ uri: pokemon.imageBack }}
-                style={{ width: 150, height: 150 }}
+                style={{ width: 120, height: 120 }}
               />
             </View>
           </View>
@@ -100,14 +124,23 @@ export default function Index() {
 }
 
 const styles = StyleSheet.create({
+  search: {
+    backgroundColor: "#eee",
+    padding: 10,
+    borderRadius: 10,
+    marginBottom: 10,
+  },
+
   name: {
     fontSize: 29,
-    fontWidth: "bold",
+    fontWeight: "bold",
     textAlign: "center",
+    textTransform: "capitalize",
   },
+
   type: {
     fontSize: 20,
-    fontWidth: "bold",
+    fontWeight: "bold",
     color: "gray",
     textAlign: "center",
   },
